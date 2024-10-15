@@ -2,6 +2,7 @@
 library(dplyr)
 library(ggplot2)
 library(tidyr)
+library(zoo)  # for interpolation
 
 # Load the dataset
 stock_data <- read.csv("US_Stock_Data.csv")
@@ -24,6 +25,10 @@ all_assets <- c(tech_stocks, indices, commodities, cryptocurrencies)
 stock_data <- stock_data %>%
   mutate(across(all_of(all_assets), ~ as.numeric(gsub(",", "", .))))
 
+# Interpolate missing values for each asset column
+stock_data <- stock_data %>%
+  mutate(across(all_of(all_assets), ~ na.approx(., rule = 2)))
+
 # Define significant COVID-19 events with dates and descriptions
 event_dates <- data.frame(
   Event = c("WHO declares COVID-19 a pandemic", "US Stimulus Bill", "Pfizer Vaccine Announcement", 
@@ -37,8 +42,8 @@ returns_data <- stock_data %>%
   mutate(across(-Date, ~ c(NA, diff(log(.))), .names = "Return_{col}")) %>%
   mutate(across(starts_with("Return"), ~ replace_na(., 0)))  # Replace NA with 0 across all returns
 
-# Function to calculate average returns around each event
-event_impact <- function(event_date, window = 5) {
+# Function to calculate average returns around each event with an extended window
+event_impact <- function(event_date, window = 10) {
   returns_data %>%
     filter(Date >= event_date - window & Date <= event_date + window) %>%
     summarise(across(starts_with("Return"), mean)) %>%
@@ -46,7 +51,7 @@ event_impact <- function(event_date, window = 5) {
 }
 
 # Apply event impact calculation for each event
-event_results <- bind_rows(lapply(event_dates$Date, event_impact, window = 5))
+event_results <- bind_rows(lapply(event_dates$Date, event_impact, window = 10))
 
 # Reshape data for plotting
 event_results_long <- event_results %>%
