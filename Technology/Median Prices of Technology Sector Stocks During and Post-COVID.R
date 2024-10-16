@@ -14,12 +14,6 @@ tech_stocks <- c("Apple_Price", "Microsoft_Price", "Nvidia_Price", "Google_Price
 stock_data <- stock_data %>%
   mutate(across(all_of(tech_stocks), ~ as.numeric(gsub(",", "", .))))
 
-# Calculate the daily mean price for the technology sector
-stock_data <- stock_data %>%
-  rowwise() %>%
-  mutate(Tech_Sector_Mean = mean(c_across(all_of(tech_stocks)), na.rm = TRUE)) %>%
-  ungroup()
-
 # Filter the data for the COVID (2020-2021) and post-COVID (2022-2024) periods
 during_covid_data <- stock_data %>%
   filter(Date >= as.Date("2020-01-01") & Date <= as.Date("2021-12-31"))
@@ -27,27 +21,32 @@ during_covid_data <- stock_data %>%
 post_covid_data <- stock_data %>%
   filter(Date >= as.Date("2022-01-01") & Date <= as.Date("2024-12-31"))
 
-# Calculate the standard deviation of the Tech_Sector_Mean during COVID and post-COVID
-std_dev_tech_during_covid <- sd(during_covid_data$Tech_Sector_Mean, na.rm = TRUE)
-std_dev_tech_post_covid <- sd(post_covid_data$Tech_Sector_Mean, na.rm = TRUE)
+# Calculate the median price for the technology sector during COVID and post-COVID
+median_during_covid <- during_covid_data %>%
+  summarise(across(all_of(tech_stocks), median, na.rm = TRUE)) %>%
+  rowMeans(na.rm = TRUE)
+
+median_post_covid <- post_covid_data %>%
+  summarise(across(all_of(tech_stocks), median, na.rm = TRUE)) %>%
+  rowMeans(na.rm = TRUE)
 
 # Combine the results into a data frame for visualization
-std_dev_tech_sector <- data.frame(
+median_prices <- data.frame(
   Period = c("During COVID (2020-2021)", "Post-COVID (2022-2024)"),
-  Standard_Deviation = c(std_dev_tech_during_covid, std_dev_tech_post_covid)
+  Median_Price = c(median_during_covid, median_post_covid)
 )
 
-# Print the standard deviation values to the console
-print("Std. Deviation of the Technology Sector During and Post-COVID:")
-print(std_dev_tech_sector)
+# Print the median prices to the console
+print("Median Prices of Technology Sector Stocks During and Post-COVID:")
+print(median_prices)
 
-# Plot the standard deviation comparison
-ggplot(std_dev_tech_sector, aes(x = Period, y = Standard_Deviation, fill = Period)) +
+# Plot the median prices
+ggplot(median_prices, aes(x = Period, y = Median_Price, fill = Period)) +
   geom_bar(stat = "identity", width = 0.5) +
   labs(
-    title = "Std. Deviation of Technology Sector's During and Post-COVID",
+    title = "Median Price of Technology Sector Stocks During and Post-COVID",
     x = "Period",
-    y = "Standard Deviation"
+    y = "Median Price (USD)"
   ) +
   scale_fill_manual(values = c("During COVID (2020-2021)" = "lightblue", "Post-COVID (2022-2024)" = "orange")) +
   theme_minimal() +

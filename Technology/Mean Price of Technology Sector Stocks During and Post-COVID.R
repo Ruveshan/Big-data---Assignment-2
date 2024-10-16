@@ -21,7 +21,7 @@ during_covid_data <- stock_data %>%
 post_covid_data <- stock_data %>%
   filter(Date >= as.Date("2022-01-01") & Date <= as.Date("2024-12-31"))
 
-# Calculate the mean price for each stock during COVID and post-COVID
+# Calculate the mean price for the technology sector during COVID and post-COVID
 mean_during_covid <- during_covid_data %>%
   summarise(across(all_of(tech_stocks), mean, na.rm = TRUE)) %>%
   rowMeans(na.rm = TRUE)
@@ -35,6 +35,10 @@ mean_prices <- data.frame(
   Period = c("During COVID (2020-2021)", "Post-COVID (2022-2024)"),
   Mean_Price = c(mean_during_covid, mean_post_covid)
 )
+
+# Print the mean prices to the console
+print("Mean Prices of Technology Sector Stocks During and Post-COVID:")
+print(mean_prices)
 
 # Plot the mean prices
 ggplot(mean_prices, aes(x = Period, y = Mean_Price, fill = Period)) +
