@@ -57,6 +57,10 @@ volatility_data <- long_returns %>%
   }) %>%
   ungroup()
 
+# Print the volatility data to the console
+print("Volatility Data for Each Sector's Representative Asset:")
+print(volatility_data)
+
 # Visualization of Volatility Clustering Over Time by Sector
 ggplot(volatility_data, aes(x = Date, y = Volatility, color = Sector, group = Sector)) +
   geom_line() +
